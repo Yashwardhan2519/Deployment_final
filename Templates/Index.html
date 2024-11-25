@@ -42,32 +42,32 @@
         <form action="/predict" method="post">
             <!-- Senior Citizen -->
             <div class="mb-3">
-                <label for="SeniorCitizen" class="form-label">Senior Citizen (0 or 1)</label>
-                <input type="number" class="form-control" name="SeniorCitizen" step="1" required>
+                <label for="SeniorCitizen" class="form-label">Are you a Senior Citizen? (0 for No, 1 for Yes)</label>
+                <input type="number" class="form-control" id="SeniorCitizen" name="SeniorCitizen" min="0" max="1" required>
             </div>
 
             <!-- Monthly Charges -->
             <div class="mb-3">
-                <label for="MonthlyCharges" class="form-label">Monthly Charges</label>
-                <input type="number" class="form-control" name="MonthlyCharges" step="0.01" required>
+                <label for="MonthlyCharges" class="form-label">Monthly Charges (in USD)</label>
+                <input type="number" class="form-control" id="MonthlyCharges" name="MonthlyCharges" step="0.01" required>
             </div>
 
             <!-- Total Charges -->
             <div class="mb-3">
-                <label for="TotalCharges" class="form-label">Total Charges</label>
-                <input type="number" class="form-control" name="TotalCharges" step="0.01" required>
+                <label for="TotalCharges" class="form-label">Total Charges (in USD)</label>
+                <input type="number" class="form-control" id="TotalCharges" name="TotalCharges" step="0.01" required>
             </div>
 
             <!-- Gender -->
             <div class="mb-3">
-                <label for="gender_Female" class="form-label">Gender (Female = 1, Male = 0)</label>
-                <input type="number" class="form-control" name="gender_Female" step="1" required>
+                <label for="gender_Female" class="form-label">Gender (1 for Female, 0 for Male)</label>
+                <input type="number" class="form-control" id="gender_Female" name="gender_Female" min="0" max="1" required>
             </div>
 
             <!-- Partner -->
             <div class="mb-3">
-                <label for="Partner_Yes" class="form-label">Partner (Yes = 1, No = 0)</label>
-                <input type="number" class="form-control" name="Partner_Yes" step="1" required>
+                <label for="Partner_Yes" class="form-label">Do you have a Partner? (1 for Yes, 0 for No)</label>
+                <input type="number" class="form-control" id="Partner_Yes" name="Partner_Yes" min="0" max="1" required>
             </div>
 
             <!-- Add more fields as needed -->
