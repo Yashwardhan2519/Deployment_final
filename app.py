@@ -54,5 +54,5 @@ def predict():
         return f"<h2>Error: {str(e)}</h2>"
 
 if __name__ == '__main__':
-    # Bind the server to the specific IP and port
-    app.run(host='0.0.0.0', port=5000)
+    app.run(debug=True)
+    
