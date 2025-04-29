@@ -1,58 +1,64 @@
-from flask import Flask, render_template, request, jsonify
-import joblib
+import streamlit as st
 import numpy as np
+import pandas as pd
+import pickle
 
-# Initialize Flask app
-app = Flask(__name__)
+# Load model bundle
+@st.cache_resource
+def load_model():
+    with open("model.pkl", "rb") as f:
+        bundle = pickle.load(f)
+    return bundle["model"], bundle["scaler"], bundle["columns"]
 
-# Load the trained model
-model = joblib.load('logistic_model.pkl')
+model, scaler, columns = load_model()
 
-# Define the feature names
-feature_names = [
-    'SeniorCitizen', 'MonthlyCharges', 'TotalCharges', 'gender_Female', 'gender_Male',
-    'Partner_No', 'Partner_Yes', 'Dependents_No', 'Dependents_Yes', 'PhoneService_No',
-    'PhoneService_Yes', 'MultipleLines_No', 'MultipleLines_No phone service', 
-    'MultipleLines_Yes', 'InternetService_DSL', 'InternetService_Fiber optic',
-    'InternetService_No', 'OnlineSecurity_No', 'OnlineSecurity_No internet service', 
-    'OnlineSecurity_Yes', 'OnlineBackup_No', 'OnlineBackup_No internet service', 
-    'OnlineBackup_Yes', 'DeviceProtection_No', 'DeviceProtection_No internet service', 
-    'DeviceProtection_Yes', 'TechSupport_No', 'TechSupport_No internet service', 
-    'TechSupport_Yes', 'StreamingTV_No', 'StreamingTV_No internet service', 
-    'StreamingTV_Yes', 'StreamingMovies_No', 'StreamingMovies_No internet service', 
-    'StreamingMovies_Yes', 'Contract_Month-to-month', 'Contract_One year', 
-    'Contract_Two year', 'PaperlessBilling_No', 'PaperlessBilling_Yes', 
-    'PaymentMethod_Bank transfer (automatic)', 'PaymentMethod_Credit card (automatic)', 
-    'PaymentMethod_Electronic check', 'PaymentMethod_Mailed check', 
-    'tenure_group_1 - 12', 'tenure_group_13 - 24', 'tenure_group_25 - 36', 
-    'tenure_group_37 - 48', 'tenure_group_49 - 60', 'tenure_group_61 - 72'
-]
+st.title("Customer Churn Prediction")
 
-@app.route('/')
-def home():
-    return render_template('index.html')
+# Collect user input
+def get_user_input():
+    gender = st.selectbox("Gender", ["Female", "Male"])
+    SeniorCitizen = st.selectbox("Senior Citizen", [0, 1])
+    Partner = st.selectbox("Partner", ["Yes", "No"])
+    Dependents = st.selectbox("Dependents", ["Yes", "No"])
+    tenure = st.slider("Tenure", 0, 72, 1)
+    PhoneService = st.selectbox("Phone Service", ["Yes", "No"])
+    MultipleLines = st.selectbox("Multiple Lines", ["No", "Yes", "No phone service"])
+    InternetService = st.selectbox("Internet Service", ["DSL", "Fiber optic", "No"])
+    OnlineSecurity = st.selectbox("Online Security", ["Yes", "No", "No internet service"])
+    OnlineBackup = st.selectbox("Online Backup", ["Yes", "No", "No internet service"])
+    DeviceProtection = st.selectbox("Device Protection", ["Yes", "No", "No internet service"])
+    TechSupport = st.selectbox("Tech Support", ["Yes", "No", "No internet service"])
+    StreamingTV = st.selectbox("Streaming TV", ["Yes", "No", "No internet service"])
+    StreamingMovies = st.selectbox("Streaming Movies", ["Yes", "No", "No internet service"])
+    Contract = st.selectbox("Contract", ["Month-to-month", "One year", "Two year"])
+    PaperlessBilling = st.selectbox("Paperless Billing", ["Yes", "No"])
+    PaymentMethod = st.selectbox("Payment Method", [
+        "Electronic check", "Mailed check", "Bank transfer (automatic)", "Credit card (automatic)"
+    ])
+    MonthlyCharges = st.number_input("Monthly Charges", min_value=0.0, value=70.0)
+    TotalCharges = st.number_input("Total Charges", min_value=0.0, value=2500.0)
 
-@app.route('/predict', methods=['POST'])
-def predict():
-    try:
-        # Extract form data
-        input_data = [float(request.form.get(feature, 0)) for feature in feature_names]
-        features = np.array(input_data).reshape(1, -1)
+    user_dict = {
+        "gender": gender, "SeniorCitizen": SeniorCitizen, "Partner": Partner, "Dependents": Dependents,
+        "tenure": tenure, "PhoneService": PhoneService, "MultipleLines": MultipleLines,
+        "InternetService": InternetService, "OnlineSecurity": OnlineSecurity, "OnlineBackup": OnlineBackup,
+        "DeviceProtection": DeviceProtection, "TechSupport": TechSupport, "StreamingTV": StreamingTV,
+        "StreamingMovies": StreamingMovies, "Contract": Contract, "PaperlessBilling": PaperlessBilling,
+        "PaymentMethod": PaymentMethod, "MonthlyCharges": MonthlyCharges, "TotalCharges": TotalCharges
+    }
 
-        # Make prediction
-        prediction = model.predict(features)
-        probability = model.predict_proba(features)
+    return pd.DataFrame([user_dict])
 
-        # Display result
-        return f"""
-        <h2>Prediction: {'Churn' if prediction[0] == 1 else 'No Churn'}</h2>
-        <p>Probability of Churn: {probability[0][1]:.2f}</p>
-        <p>Probability of No Churn: {probability[0][0]:.2f}</p>
-        <a href="/">Go back</a>
-        """
-    except Exception as e:
-        return f"<h2>Error: {str(e)}</h2>"
+input_df = get_user_input()
 
-if __name__ == '__main__':
-    app.run(debug=True)
-    
+# Preprocess input
+input_encoded = pd.get_dummies(input_df)
+input_encoded = input_encoded.reindex(columns=columns, fill_value=0)
+
+# Scale
+input_scaled = scaler.transform(input_encoded)
+
+# Predict
+if st.button("Predict"):
+    prediction = model.predict(input_scaled)[0]
+    st.write("Prediction: ", "Churn" if prediction == 1 else "No Churn")
